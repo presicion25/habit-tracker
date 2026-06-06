@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weekly Habit Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1b2e;
+      --surface:   #152338;
+      --border:    #1e3050;
+      --text:      #ffffff;
+      --muted:     #8aa4c0;
+      --accent:    #D97757;
+      --accent-muted: rgba(217, 119, 87, 0.15);
+      --water:     #4a9eff;
+      --water-muted: rgba(74, 158, 255, 0.15);
+      --workout:   #ff5c7c;
+      --workout-muted: rgba(255, 92, 124, 0.15);
+      --read:      #a78bfa;
+      --read-muted: rgba(167, 139, 250, 0.15);
+      --sleep:     #34d4c8;
+      --sleep-muted: rgba(52, 212, 200, 0.15);
+      --green:     #22c55e;
+      --radius:    12px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .header .week-label {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .header h1 {
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+    .header p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    /* ── Overall Progress Card ── */
+    .progress-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      margin-bottom: 32px;
+    }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+    .progress-header .label {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .progress-header .count {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .progress-header .count span {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .progress-bar-track {
+      background: var(--border);
+      border-radius: 999px;
+      height: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), #f0a070);
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 0%;
+      position: relative;
+    }
+    .progress-bar-fill::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 24px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 999px;
+      filter: blur(4px);
+    }
+    .progress-meta {
+      display: flex;
+      gap: 24px;
+      margin-top: 16px;
+    }
+    .progress-meta .stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .progress-meta .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Day Grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+    }
+
+    .day-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.2s;
+    }
+    .day-card.all-done {
+      border-color: var(--green);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.2);
+    }
+    .day-card.today {
+      border-color: var(--accent);
+    }
+
+    .day-header {
+      text-align: center;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .day-name {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .day-date {
+      font-size: 20px;
+      font-weight: 800;
+      margin-top: 2px;
+      color: var(--text);
+    }
+    .day-card.today .day-date {
+      color: var(--accent);
+    }
+    .today-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: var(--accent-muted);
+      color: var(--accent);
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-top: 4px;
+    }
+
+    .day-progress {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+    }
+    .day-pip {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.2s;
+    }
+    .day-pip.active { background: var(--green); }
+
+    /* ── Habit Buttons ── */
+    .habit-btn {
+      width: 100%;
+      padding: 9px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.18s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .habit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .habit-btn:active { transform: translateY(0); }
+
+    .habit-btn .icon { font-size: 18px; line-height: 1; }
+    .habit-btn .name {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: color 0.18s;
+    }
+    .habit-btn .check-mark {
+      position: absolute;
+      top: 4px; right: 5px;
+      font-size: 9px;
+      opacity: 0;
+      transition: opacity 0.18s;
+    }
+
+    /* Water */
+    .habit-btn.water:not(.checked) { border-color: rgba(74,158,255,0.25); }
+    .habit-btn.water:not(.checked):hover { border-color: var(--water); background: var(--water-muted); }
+    .habit-btn.water.checked {
+      background: var(--water-muted);
+      border-color: var(--water);
+    }
+    .habit-btn.water.checked .name { color: var(--water); }
+    .habit-btn.water.checked .check-mark { opacity: 1; color: var(--water); }
+
+    /* Workout */
+    .habit-btn.workout:not(.checked) { border-color: rgba(255,92,124,0.25); }
+    .habit-btn.workout:not(.checked):hover { border-color: var(--workout); background: var(--workout-muted); }
+    .habit-btn.workout.checked {
+      background: var(--workout-muted);
+      border-color: var(--workout);
+    }
+    .habit-btn.workout.checked .name { color: var(--workout); }
+    .habit-btn.workout.checked .check-mark { opacity: 1; color: var(--workout); }
+
+    /* Read */
+    .habit-btn.read:not(.checked) { border-color: rgba(167,139,250,0.25); }
+    .habit-btn.read:not(.checked):hover { border-color: var(--read); background: var(--read-muted); }
+    .habit-btn.read.checked {
+      background: var(--read-muted);
+      border-color: var(--read);
+    }
+    .habit-btn.read.checked .name { color: var(--read); }
+    .habit-btn.read.checked .check-mark { opacity: 1; color: var(--read); }
+
+    /* Sleep */
+    .habit-btn.sleep:not(.checked) { border-color: rgba(52,212,200,0.25); }
+    .habit-btn.sleep:not(.checked):hover { border-color: var(--sleep); background: var(--sleep-muted); }
+    .habit-btn.sleep.checked {
+      background: var(--sleep-muted);
+      border-color: var(--sleep);
+    }
+    .habit-btn.sleep.checked .name { color: var(--sleep); }
+    .habit-btn.sleep.checked .check-mark { opacity: 1; color: var(--sleep); }
+
+    /* ── Reset Button ── */
+    .actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 36px;
+    }
+    .reset-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .reset-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-muted);
+    }
+
+    /* ── Streak Banner ── */
+    .streak-banner {
+      text-align: center;
+      margin-top: 28px;
+      padding: 14px;
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--green);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.4s, transform 0.4s;
+      pointer-events: none;
+    }
+    .streak-banner.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .progress-meta { flex-wrap: wrap; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="week-label" id="week-label">Week of May 26</div>
+    <h1>Weekly Habit Tracker</h1>
+    <p>Check off each habit to track your progress through the week.</p>
+  </div>
+
+  <!-- Overall Progress -->
+  <div class="progress-card">
+    <div class="progress-header">
+      <span class="label">Weekly Progress</span>
+      <span class="count" id="progress-count">0 <span>/ 28 habits</span></span>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+    <div class="progress-meta">
+      <div class="stat">
+        <div class="dot" style="background: var(--water)"></div>
+        <span id="water-count">0 / 7</span> &nbsp;Drink Water
+      </div>
+      <div class="stat">
+        <div class="dot" style="background: var(--workout)"></div>
+        <span id="workout-count">0 / 7</span> &nbsp;Workout
+      </div>
+      <div class="stat">
+        <div class="dot" style="background: var(--read)"></div>
+        <span id="read-count">0 / 7</span> &nbsp;Read 20 Mins
+      </div>
+      <div class="stat">
+        <div class="dot" style="background: var(--sleep)"></div>
+        <span id="sleep-count">0 / 7</span> &nbsp;Sleep 8 Hours
+      </div>
+    </div>
+  </div>
+
+  <!-- Day Grid -->
+  <div class="grid" id="day-grid"></div>
+
+  <!-- Streak Banner -->
+  <div class="streak-banner" id="streak-banner">🔥 Perfect week! All 28 habits completed!</div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="reset-btn" onclick="resetAll()">↺ Reset Week</button>
+  </div>
+
+</div>
+
+<script>
+  const DAYS   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const HABITS = [
+    { id: 'water',   icon: '💧', name: 'Drink Water',   cls: 'water'   },
+    { id: 'workout', icon: '💪', name: 'Workout',       cls: 'workout' },
+    { id: 'read',    icon: '📚', name: 'Read 20 Mins',  cls: 'read'    },
+    { id: 'sleep',   icon: '🌙', name: 'Sleep 8 Hours', cls: 'sleep'   },
+  ];
+
+  // Work out the Monday of the current week
+  function getMondayOfCurrentWeek() {
+    const today = new Date();
+    const day   = today.getDay(); // 0 = Sun
+    const diff  = (day === 0) ? -6 : 1 - day;
+    const mon   = new Date(today);
+    mon.setDate(today.getDate() + diff);
+    return mon;
+  }
+
+  const monday = getMondayOfCurrentWeek();
+  const todayIdx = (() => {
+    const d = new Date().getDay();
+    return d === 0 ? 6 : d - 1; // Mon=0 … Sun=6
+  })();
+
+  // Week label
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('week-label').textContent =
+    `Week of ${monthNames[monday.getMonth()]} ${monday.getDate()}`;
+
+  // State: state[dayIdx][habitId] = bool
+  const STORAGE_KEY = 'habit_tracker_v1_' + monday.toISOString().slice(0,10);
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+  if (!state) {
+    state = DAYS.map(() => ({ water: false, workout: false, read: false, sleep: false }));
+  } else {
+    // Migrate old state that may be missing the sleep key
+    state = state.map(d => ({ water: false, workout: false, read: false, sleep: false, ...d }));
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  function toggle(dayIdx, habitId) {
+    state[dayIdx][habitId] = !state[dayIdx][habitId];
+    saveState();
+    renderAll();
+  }
+
+  function resetAll() {
+    state = DAYS.map(() => ({ water: false, workout: false, read: false, sleep: false }));
+    saveState();
+    renderAll();
+  }
+
+  function buildGrid() {
+    const grid = document.getElementById('day-grid');
+    grid.innerHTML = '';
+    DAYS.forEach((dayName, di) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + di);
+
+      const card = document.createElement('div');
+      card.className = 'day-card';
+      card.id = `day-${di}`;
+      if (di === todayIdx) card.classList.add('today');
+
+      const todayBadge = di === todayIdx ? '<div class="today-badge">Today</div>' : '';
+
+      card.innerHTML = `
+        <div class="day-header">
+          <div class="day-name">${dayName}</div>
+          <div class="day-date">${date.getDate()}</div>
+          ${todayBadge}
+        </div>
+        <div class="day-progress" id="pips-${di}">
+          ${HABITS.map(h => `<div class="day-pip" id="pip-${di}-${h.id}"></div>`).join('')}
+        </div>
+        ${HABITS.map(h => `
+          <button class="habit-btn ${h.cls}" id="btn-${di}-${h.id}" onclick="toggle(${di}, '${h.id}')">
+            <span class="check-mark">✓</span>
+            <span class="icon">${h.icon}</span>
+            <span class="name">${h.name}</span>
+          </button>
+        `).join('')}
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function renderAll() {
+    let total = 0;
+    const habitTotals = { water: 0, workout: 0, read: 0, sleep: 0 };
+
+    DAYS.forEach((_, di) => {
+      let dayDone = 0;
+      HABITS.forEach(h => {
+        const checked = state[di][h.id];
+        const btn = document.getElementById(`btn-${di}-${h.id}`);
+        const pip = document.getElementById(`pip-${di}-${h.id}`);
+        if (btn) {
+          btn.classList.toggle('checked', checked);
+        }
+        if (pip) {
+          pip.classList.toggle('active', checked);
+        }
+        if (checked) { total++; dayDone++; habitTotals[h.id]++; }
+      });
+
+      const card = document.getElementById(`day-${di}`);
+      if (card) {
+        card.classList.toggle('all-done', dayDone === HABITS.length);
+      }
+    });
+
+    // Progress bar
+    const TOTAL_HABITS = HABITS.length * 7;
+    const pct = Math.round((total / TOTAL_HABITS) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-count').innerHTML =
+      `${total} <span>/ ${TOTAL_HABITS} habits</span>`;
+    document.getElementById('water-count').textContent   = `${habitTotals.water} / 7`;
+    document.getElementById('workout-count').textContent = `${habitTotals.workout} / 7`;
+    document.getElementById('read-count').textContent    = `${habitTotals.read} / 7`;
+    document.getElementById('sleep-count').textContent   = `${habitTotals.sleep} / 7`;
+
+    // Streak banner
+    const banner = document.getElementById('streak-banner');
+    banner.classList.toggle('visible', total === TOTAL_HABITS);
+  }
+
+  buildGrid();
+  renderAll();
+</script>
+</body>
+</html>
